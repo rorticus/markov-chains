@@ -1,32 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
+import {useEffect, useState} from 'react'
 import './App.css'
+import {buildMarkovChain, generateText, MarkovChain, parseTokens} from "./markov";
+
+const nGramLength = 3;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [chain, setChain] = useState<MarkovChain | null>(null);
+  const [text, setText] = useState<string | null>(null);
+  
+  useEffect(() => {
+      fetch("./time-machine.txt").then(response => response.text()).then(text => {
+          const chain: MarkovChain = {};
+          text.split(/[\.\?\!]/).forEach(line => {
+              const tokens = parseTokens(line, nGramLength);
+              buildMarkovChain(chain, tokens, nGramLength);
+          });
+          
+          setText(generateText(chain, nGramLength));
+          setChain(chain);
+      });
+  }, []);
 
   return (
     <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+        {chain === null ? <p>Loading...</p> : <p>{text}</p>}
     </div>
   )
 }
